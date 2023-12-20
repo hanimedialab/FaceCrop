@@ -38,7 +38,7 @@ def detect_faces(image):
     # scaleFactor와 minNeighbors를 조정하여 감도를 높입니다.
     faces = face_cascade.detectMultiScale(
         gray, 
-        scaleFactor=1.05,  # 더 작은 값을 시도해보세요
+        scaleFactor=1.1,  # 더 작은 값을 시도해보세요
         minNeighbors=3,    # 더 작은 값으로 조정
         minSize=(30, 30)
     )
