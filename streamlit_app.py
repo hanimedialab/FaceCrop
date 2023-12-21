@@ -148,48 +148,51 @@ def main():
         # 얼굴 탐지 및 세션 상태 업데이트
         faces, img = detect_faces(image)
         st.session_state.faces = faces
-
-        # 썸네일 및 라디오 버튼 표시
-        if len(faces) == 0:
-            st.write("얼굴이 감지되지 않았습니다.")
+        
+        if not faces:
+            st.error("감지된 얼굴이 없습니다.")
         else:
-            # 얼굴 썸네일 표시
-            for i, face in enumerate(faces, start=1):
-                x, y, w, h = face
-                face_img = img[y:y+h, x:x+w]
-                face_img = cv2.resize(face_img, (100, 100))
-                st.image(face_img, caption=f'Face {i}', width=100)
-
-            # 라디오 버튼으로 얼굴 선택
-            selected_face_index = st.radio("Select a face to crop", range(1, len(st.session_state.faces) + 1)) - 1
-            
-            # 크롭 방식 선택
-            crop_method = st.radio("Choose the crop method", ["얼굴만 자르기", "주변을 포함해 자르기"])
-
-            # '자르기' 버튼
-            if st.button("자르기"):
-                if crop_method == "얼굴만 자르기":
-                    cropped_image = crop_face_minimum(img, faces[selected_face_index])
-                else:
-                    cropped_image = crop_face_original(img, faces[selected_face_index])
-
-                st.image(cropped_image, caption='Cropped Image', use_column_width=True)
-
-                # 크롭된 이미지 다운로드 버튼
-                buf = io.BytesIO()
-                Image.fromarray(cropped_image).save(buf, format="PNG")
-                byte_im = buf.getvalue()
-
-                # 원본 이미지명 추출 및 다운로드 파일명 설정
-                original_file_name, file_extension = os.path.splitext(uploaded_file.name)
-                cropped_file_name = f"{original_file_name}_cropped.png"
-
-                st.download_button(
-                    label="내려받기",
-                    data=byte_im,
-                    file_name=cropped_file_name,
-                    mime="image/png"
-                )
-
+            # 썸네일 및 라디오 버튼 표시
+            if len(faces) == 0:
+                st.write("얼굴이 감지되지 않았습니다.")
+            else:
+                # 얼굴 썸네일 표시
+                for i, face in enumerate(faces, start=1):
+                    x, y, w, h = face
+                    face_img = img[y:y+h, x:x+w]
+                    face_img = cv2.resize(face_img, (100, 100))
+                    st.image(face_img, caption=f'Face {i}', width=100)
+    
+                # 라디오 버튼으로 얼굴 선택
+                selected_face_index = st.radio("Select a face to crop", range(1, len(st.session_state.faces) + 1)) - 1
+                
+                # 크롭 방식 선택
+                crop_method = st.radio("Choose the crop method", ["얼굴만 자르기", "주변을 포함해 자르기"])
+    
+                # '자르기' 버튼
+                if st.button("자르기"):
+                    if crop_method == "얼굴만 자르기":
+                        cropped_image = crop_face_minimum(img, faces[selected_face_index])
+                    else:
+                        cropped_image = crop_face_original(img, faces[selected_face_index])
+    
+                    st.image(cropped_image, caption='Cropped Image', use_column_width=True)
+    
+                    # 크롭된 이미지 다운로드 버튼
+                    buf = io.BytesIO()
+                    Image.fromarray(cropped_image).save(buf, format="PNG")
+                    byte_im = buf.getvalue()
+    
+                    # 원본 이미지명 추출 및 다운로드 파일명 설정
+                    original_file_name, file_extension = os.path.splitext(uploaded_file.name)
+                    cropped_file_name = f"{original_file_name}_cropped.png"
+    
+                    st.download_button(
+                        label="내려받기",
+                        data=byte_im,
+                        file_name=cropped_file_name,
+                        mime="image/png"
+                    )
+    
 if __name__ == "__main__":
     main()
