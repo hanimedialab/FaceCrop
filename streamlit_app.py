@@ -43,44 +43,44 @@ def detect_faces(image):
         detected_faces.append((x, y, w-x, h-y))  # Converting to (x, y, w, h) format
     return detected_faces, img
 
-# # 얼굴 중심으로 원본 이미지를 4:3 비율로 크롭하는 함수
-# def crop_face(image, face):
-#     x, y, w, h = face
-#     center_x = x + w // 2
-#     center_y = y + h // 2
+# 얼굴을 중심으로 원본 크기를 넘지 않도록 4:3 비율로 크롭하는 로직
+def crop_face_original(image, face):
+    x, y, w, h = face
+    center_x = x + w // 2
+    center_y = y + h // 2
 
-#     img_height, img_width = image.shape[:2]
-#     aspect_ratio = 4 / 3
+    img_height, img_width = image.shape[:2]
+    aspect_ratio = 4 / 3
 
-#     # 가로, 세로 중 어느 쪽을 기준으로 크롭할지 결정
-#     if img_width / img_height >= aspect_ratio:
-#         # 이미지가 가로로 길거나 정사각형일 때
-#         crop_width = int(img_height * aspect_ratio)
-#         crop_height = img_height
-#     else:
-#         # 이미지가 세로로 길 때
-#         crop_width = img_width
-#         crop_height = int(img_width / aspect_ratio)
+    # 가로, 세로 중 어느 쪽을 기준으로 크롭할지 결정
+    if img_width / img_height >= aspect_ratio:
+        # 이미지가 가로로 길거나 정사각형일 때
+        crop_width = int(img_height * aspect_ratio)
+        crop_height = img_height
+    else:
+        # 이미지가 세로로 길 때
+        crop_width = img_width
+        crop_height = int(img_width / aspect_ratio)
 
-#     # 크롭 영역이 이미지 경계를 넘어가지 않도록 조정
-#     start_x = max(center_x - crop_width // 2, 0)
-#     end_x = start_x + crop_width
-#     if end_x > img_width:
-#         end_x = img_width
-#         start_x = end_x - crop_width
+    # 크롭 영역이 이미지 경계를 넘어가지 않도록 조정
+    start_x = max(center_x - crop_width // 2, 0)
+    end_x = start_x + crop_width
+    if end_x > img_width:
+        end_x = img_width
+        start_x = end_x - crop_width
 
-#     start_y = max(center_y - crop_height // 2, 0)
-#     end_y = start_y + crop_height
-#     if end_y > img_height:
-#         end_y = img_height
-#         start_y = end_y - crop_height
+    start_y = max(center_y - crop_height // 2, 0)
+    end_y = start_y + crop_height
+    if end_y > img_height:
+        end_y = img_height
+        start_y = end_y - crop_height
 
-#     # 이미지 크롭
-#     cropped_img = image[start_y:end_y, start_x:end_x]
-#     return cropped_img
+    # 이미지 크롭
+    cropped_img = image[start_y:end_y, start_x:end_x]
+    return cropped_img
 
-# 얼굴 중심으로 원본 이미지를 4:3 비율로 크롭하는 함수
-def crop_face(image, face):
+# 얼굴을 기준으로 최솟값 범위 안에서 크롭하는 로직
+def crop_face_minimum(image, face):
     x, y, w, h = face
     center_x = x + w // 2
     center_y = y + h // 2
@@ -139,10 +139,17 @@ def main():
 
             # 라디오 버튼으로 얼굴 선택
             selected_face_index = st.radio("Select a face to crop", range(1, len(st.session_state.faces) + 1)) - 1
+            
+            # 크롭 방식 선택
+            crop_method = st.radio("Choose the crop method", ["얼굴만 자르기", "주변을 포함해 자르기"])
 
             # '자르기' 버튼
             if st.button("자르기"):
-                cropped_image = crop_face(img, st.session_state.faces[selected_face_index])
+                if crop_method == "얼굴만 자르기":
+                    cropped_image = crop_face_minimum(img, faces[selected_face_index])
+                else:
+                    cropped_image = crop_face_original(img, faces[selected_face_index])
+
                 st.image(cropped_image, caption='Cropped Image', use_column_width=True)
 
                 # 크롭된 이미지 다운로드 버튼
