@@ -88,8 +88,11 @@ def crop_face_minimum(image, face):
     img_height, img_width = image.shape[:2]
     aspect_ratio = 4 / 3
 
-    # 최소 크롭 가로 크기 설정 (최소 300px)
-    min_crop_width = max(300, w * 1.5)
+    # 원본 이미지의 가로 크기가 300px 미만이면 원본 크기를 기준으로 설정
+    if img_width < 300:
+        min_crop_width = img_width
+    else:
+        min_crop_width = max(300, w * 1.5)
 
     # 세로 크기는 4:3 비율에 맞춰 계산
     min_crop_height = int(min_crop_width / aspect_ratio)
