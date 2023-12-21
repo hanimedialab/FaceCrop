@@ -134,7 +134,7 @@ def main():
     # featured image
     st.image("https://simpleicon.com/wp-content/uploads/crop.png", width=200)
     st.title("얼굴 탐지 및 이미지 크롭")
-    st.write("이미지 파일을 업로드하고, 탐지된 얼굴 중 하나를 선택하여 4:3 비율로 크롭합니다.")
+    st.write("이미지 파일을 업로드하고, 탐지된 얼굴 중 하나를 선택해 4:3 비율로 크롭합니다.")
 
     image, uploaded_file = upload_image()  # 업로드된 이미지와 파일 객체 받기
 
