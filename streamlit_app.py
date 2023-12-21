@@ -62,6 +62,8 @@ def crop_face_original(image, face):
         crop_width = img_width
         crop_height = int(img_width / aspect_ratio)
 
+    print(f"가로: {crop_width}, 세로: {crop_height}")
+
     # 크롭 영역이 이미지 경계를 넘어가지 않도록 조정
     start_x = max(center_x - crop_width // 2, 0)
     end_x = start_x + crop_width
@@ -74,7 +76,7 @@ def crop_face_original(image, face):
     if end_y > img_height:
         end_y = img_height
         start_y = end_y - crop_height
-
+    
     # 이미지 크롭
     cropped_img = image[start_y:end_y, start_x:end_x]
     return cropped_img
