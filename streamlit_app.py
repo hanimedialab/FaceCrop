@@ -88,19 +88,17 @@ def crop_face_minimum(image, face):
     img_height, img_width = image.shape[:2]
     aspect_ratio = 4 / 3
 
-    # 최소 크롭 크기 계산 (얼굴의 가로, 세로 1.5배)
-    min_crop_width = max(300, min(w, img_width) * 1.5)
-    min_crop_height = max(min(h, img_height) * 1.5, min_crop_width / aspect_ratio)
+    # 최소 크롭 가로 크기 설정 (최소 300px)
+    min_crop_width = max(300, w * 1.5)
 
-    # 최소 크기에 맞춰 크롭 영역 계산
-    crop_width = min(min_crop_width, img_width)
-    crop_height = min(min_crop_height, img_height, int(crop_width / aspect_ratio))
+    # 세로 크기는 4:3 비율에 맞춰 계산
+    min_crop_height = int(min_crop_width / aspect_ratio)
 
     # 크롭 영역이 이미지 경계를 넘어가지 않도록 조정
-    start_x = int(max(center_x - crop_width // 2, 0))
-    end_x = int(min(start_x + crop_width, img_width))
-    start_y = int(max(center_y - crop_height // 2, 0))
-    end_y = int(min(start_y + crop_height, img_height))
+    start_x = int(max(center_x - min_crop_width // 2, 0))
+    end_x = int(min(start_x + min_crop_width, img_width))
+    start_y = int(max(center_y - min_crop_height // 2, 0))
+    end_y = int(min(start_y + min_crop_height, img_height))
 
     # 이미지 크롭
     cropped_img = image[start_y:end_y, start_x:end_x]
