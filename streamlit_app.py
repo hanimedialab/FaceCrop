@@ -121,6 +121,12 @@ def crop_face_minimum(image, face):
     cropped_img = image[start_y:end_y, start_x:end_x]
     return cropped_img
 
+# 이미지에 얼굴을 표시하는 함수
+def draw_faces(img, faces):
+    for (x, y, w, h) in faces:
+        # 노란색으로 네모를 그립니다. (BGR 형식에서 노란색은 (0, 255, 255))
+        cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 255), 2)  
+    return img
 
 def main():
     # Streamlit 페이지 설정
@@ -143,38 +149,43 @@ def main():
         if len(faces) == 0:
             st.write("얼굴이 감지되지 않았습니다.")
         else:
+            # 탐지된 얼굴들을 이미지 위에 네모로 그리기
+            img_with_faces = draw_faces(img.copy(), faces)
+            st.image(img_with_faces, caption='Image with Detected Faces', use_column_width=True)
+            
             # 얼굴 썸네일 표시
             for i, face in enumerate(faces, start=1):
                 x, y, w, h = face
                 face_img = img[y:y+h, x:x+w]
                 face_img = cv2.resize(face_img, (100, 100))
                 st.image(face_img, caption=f'Face {i}', width=100)
+            
             # 라디오 버튼으로 얼굴 선택
             selected_face_index = st.radio("Select a face to crop", range(1, len(st.session_state.faces) + 1)) - 1
             
             # 크롭 방식 선택
             crop_method = st.radio("Choose the crop method", ["얼굴만 자르기", "주변을 포함해 자르기"])
-            
-            # '자르기' 버튼
-            if st.button("자르기"):
-                if crop_method == "얼굴만 자르기":
-                    cropped_image = crop_face_minimum(img, faces[selected_face_index])
-                else:
-                    cropped_image = crop_face_original(img, faces[selected_face_index])
-                st.image(cropped_image, caption='Cropped Image', use_column_width=True)
+
+            # 크롭 결과 바로 보여주기
+            if crop_method == "얼굴만 자르기":
+                cropped_image = crop_face_minimum(img, faces[selected_face_index])
+            else:
+                cropped_image = crop_face_original(img, faces[selected_face_index])
+            st.image(cropped_image, caption='Cropped Image', use_column_width=True)
                 
-                # 크롭된 이미지 다운로드 버튼
-                buf = io.BytesIO()
-                Image.fromarray(cropped_image).save(buf, format="PNG")
-                byte_im = buf.getvalue()
-                # 원본 이미지명 추출 및 다운로드 파일명 설정
-                original_file_name, file_extension = os.path.splitext(uploaded_file.name)
-                cropped_file_name = f"{original_file_name}_cropped.png"
-                st.download_button(
-                    label="내려받기",
-                    data=byte_im,
-                    file_name=cropped_file_name,
-                    mime="image/png"
-                )
+            # 크롭된 이미지 다운로드 버튼
+            buf = io.BytesIO()
+            Image.fromarray(cropped_image).save(buf, format="PNG")
+            byte_im = buf.getvalue()
+            # 원본 이미지명 추출 및 다운로드 파일명 설정
+            original_file_name, file_extension = os.path.splitext(uploaded_file.name)
+            cropped_file_name = f"{original_file_name}_cropped.png"
+            st.download_button(
+                label="내려받기",
+                data=byte_im,
+                file_name=cropped_file_name,
+                mime="image/png"
+            )
+
 if __name__ == "__main__":
     main()
