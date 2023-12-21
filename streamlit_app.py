@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 import io
 import os
+from retinaface import RetinaFace  # Importing RetinaFace
 
 # 이미지 업로드
 def upload_image():
@@ -25,39 +26,82 @@ def upload_image():
 #     faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 #     return faces, img
 
-# 얼굴 탐지 함수
+# 얼굴 탐지 함수 - Now using RetinaFace
 def detect_faces(image):
-    # Haar Cascade 분류기
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    img = image.convert('RGB')
+    img = np.array(img)
 
-    # OpenCV로 이미지 읽기
-    img = np.array(image.convert('RGB'))
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    # RetinaFace를 사용한 얼굴 탐지
+    faces = RetinaFace.detect_faces(img_path=img)
+    if faces is None:
+        return [], img
 
-    # 얼굴 탐지
-    # scaleFactor와 minNeighbors를 조정하여 감도를 높입니다.
-    faces = face_cascade.detectMultiScale(
-        gray, 
-        scaleFactor=1.1,  # 더 작은 값을 시도해보세요
-        minNeighbors=3,    # 더 작은 값으로 조정
-        minSize=(30, 30)
-    )
-    return faces, img
+    detected_faces = []
+    for face in faces.values():
+        facial_area = face['facial_area']
+        x, y, w, h = facial_area
+        detected_faces.append((x, y, w-x, h-y))  # Converting to (x, y, w, h) format
+    return detected_faces, img
 
-# 얼굴 중심으로 크롭 함수
+# # 얼굴 중심으로 원본 이미지를 4:3 비율로 크롭하는 함수
+# def crop_face(image, face):
+#     x, y, w, h = face
+#     center_x = x + w // 2
+#     center_y = y + h // 2
+
+#     img_height, img_width = image.shape[:2]
+#     aspect_ratio = 4 / 3
+
+#     # 가로, 세로 중 어느 쪽을 기준으로 크롭할지 결정
+#     if img_width / img_height >= aspect_ratio:
+#         # 이미지가 가로로 길거나 정사각형일 때
+#         crop_width = int(img_height * aspect_ratio)
+#         crop_height = img_height
+#     else:
+#         # 이미지가 세로로 길 때
+#         crop_width = img_width
+#         crop_height = int(img_width / aspect_ratio)
+
+#     # 크롭 영역이 이미지 경계를 넘어가지 않도록 조정
+#     start_x = max(center_x - crop_width // 2, 0)
+#     end_x = start_x + crop_width
+#     if end_x > img_width:
+#         end_x = img_width
+#         start_x = end_x - crop_width
+
+#     start_y = max(center_y - crop_height // 2, 0)
+#     end_y = start_y + crop_height
+#     if end_y > img_height:
+#         end_y = img_height
+#         start_y = end_y - crop_height
+
+#     # 이미지 크롭
+#     cropped_img = image[start_y:end_y, start_x:end_x]
+#     return cropped_img
+
+# 얼굴 중심으로 원본 이미지를 4:3 비율로 크롭하는 함수
 def crop_face(image, face):
     x, y, w, h = face
     center_x = x + w // 2
     center_y = y + h // 2
-    # 상하좌우 중 가장 짧은 면을 기준으로 4:3 비율 계산
-    short_side = min(image.shape[0], image.shape[1], key=lambda x: x / 4 * 3)
-    new_h = short_side
-    new_w = int(new_h * 4 / 3)
-    # 크롭 범위 계산
-    start_x = max(center_x - new_w // 2, 0)
-    end_x = min(center_x + new_w // 2, image.shape[1])
-    start_y = max(center_y - new_h // 2, 0)
-    end_y = min(center_y + new_h // 2, image.shape[0])
+
+    img_height, img_width = image.shape[:2]
+    aspect_ratio = 4 / 3
+
+    # 최소 크롭 크기 계산 (얼굴의 가로, 세로 1.5배)
+    min_crop_width = max(300, min(w, img_width) * 1.5)
+    min_crop_height = max(min(h, img_height) * 1.5, min_crop_width / aspect_ratio)
+
+    # 최소 크기에 맞춰 크롭 영역 계산
+    crop_width = min(min_crop_width, img_width)
+    crop_height = min(min_crop_height, img_height, int(crop_width / aspect_ratio))
+
+    # 크롭 영역이 이미지 경계를 넘어가지 않도록 조정
+    start_x = int(max(center_x - crop_width // 2, 0))
+    end_x = int(min(start_x + crop_width, img_width))
+    start_y = int(max(center_y - crop_height // 2, 0))
+    end_y = int(min(start_y + crop_height, img_height))
+
     # 이미지 크롭
     cropped_img = image[start_y:end_y, start_x:end_x]
     return cropped_img
@@ -119,4 +163,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
