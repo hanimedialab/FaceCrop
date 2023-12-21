@@ -88,20 +88,40 @@ def crop_face_minimum(image, face):
     img_height, img_width = image.shape[:2]
     aspect_ratio = 4 / 3
 
-    # 원본 이미지의 가로 크기가 300px 미만일 경우
-    if img_width < 300:
-        min_crop_width = img_width
-        min_crop_height = int(min_crop_width / aspect_ratio)  # 4:3 비율로 세로 크기 조정
+    # 가로 또는 세로 길이가 300px 미만일 때 4:3 비율로 크롭
+    if img_width < 300 or img_height < 300:
+        # 가장 짧은 쪽을 기준으로 크롭 비율 설정
+        base = min(img_width, img_height)
+        if base == img_width:  # 가로가 더 짧은 경우
+            crop_width = base
+            crop_height = int(crop_width / aspect_ratio)
+        else:  # 세로가 더 짧은 경우
+            crop_height = base
+            crop_width = int(crop_height * aspect_ratio)
+        
+        # 선택된 얼굴이 크롭 영역 내에 있는지 확인하고 조정
+        start_x = max(center_x - crop_width // 2, 0)
+        end_x = min(start_x + crop_width, img_width)
+        start_y = max(center_y - crop_height // 2, 0)
+        end_y = min(start_y + crop_height, img_height)
+        
+        # 크롭 영역이 이미지 경계를 넘지 않도록 재조정
+        if end_x - start_x < crop_width:
+            start_x = end_x - crop_width
+        if end_y - start_y < crop_height:
+            start_y = end_y - crop_height
     else:
-        # 최소 크롭 가로 크기 설정 (최소 300px)
-        min_crop_width = max(300, w * 1.5)
-        min_crop_height = int(min_crop_width / aspect_ratio)
+        # 원본 이미지가 큰 경우 얼굴 크기를 기준으로 크롭 영역 계산
+        crop_width = max(300, w * 1.5)
+        crop_height = int(crop_width / aspect_ratio)
+        
+        print(f"crop_width: {crop_width}, crop_height: {crop_height}")
 
-    # 크롭 영역이 이미지 경계를 넘어가지 않도록 조정
-    start_x = int(max(center_x - min_crop_width // 2, 0))
-    end_x = int(min(start_x + min_crop_width, img_width))
-    start_y = int(max(center_y - min_crop_height // 2, 0))
-    end_y = int(min(start_y + min_crop_height, img_height))
+        # 크롭 영역이 선택된 얼굴을 포함하도록 조정
+        start_x = max(center_x - crop_width // 2, 0)
+        end_x = min(start_x + crop_width, img_width)
+        start_y = max(center_y - crop_height // 2, 0)
+        end_y = min(start_y + crop_height, img_height)
 
     # 이미지 크롭
     cropped_img = image[start_y:end_y, start_x:end_x]
