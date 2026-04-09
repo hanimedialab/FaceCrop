@@ -10,7 +10,7 @@ def upload_image():
     uploaded_file = st.file_uploader("이미지 업로드", type=['jpg', 'png', 'jpeg'])
     if uploaded_file is not None:
         image = Image.open(uploaded_file).convert('RGB')
-        st.image(image, caption='Uploaded Image', use_column_width=True)  # 여기에서 원본 이미지를 표시합니다.
+        st.image(image, caption='Uploaded Image', use_container_width=True)  # 여기에서 원본 이미지를 표시합니다.
         return image, uploaded_file
     return None, None
 # 얼굴 탐지
@@ -125,7 +125,7 @@ def crop_face_minimum(image, face):
 def draw_faces(img, faces):
     for (x, y, w, h) in faces:
         # 노란색으로 네모를 그립니다. (BGR 형식에서 노란색은 (0, 255, 255))
-        cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 255), 2)  
+        cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 255), 2)
     return img
 
 def main():
@@ -151,18 +151,18 @@ def main():
         else:
             # 탐지된 얼굴들을 이미지 위에 네모로 그리기
             img_with_faces = draw_faces(img.copy(), faces)
-            st.image(img_with_faces, caption='Image with Detected Faces', use_column_width=True)
-            
+            st.image(img_with_faces, caption='Image with Detected Faces', use_container_width=True)
+
             # 얼굴 썸네일 표시
             for i, face in enumerate(faces, start=1):
                 x, y, w, h = face
                 face_img = img[y:y+h, x:x+w]
                 face_img = cv2.resize(face_img, (100, 100))
                 st.image(face_img, caption=f'Face {i}', width=100)
-            
+
             # 라디오 버튼으로 얼굴 선택
             selected_face_index = st.radio("Select a face to crop", range(1, len(st.session_state.faces) + 1)) - 1
-            
+
             # 크롭 방식 선택
             crop_method = st.radio("Choose the crop method", ["얼굴만 자르기", "주변을 포함해 자르기"])
 
@@ -171,8 +171,8 @@ def main():
                 cropped_image = crop_face_minimum(img, faces[selected_face_index])
             else:
                 cropped_image = crop_face_original(img, faces[selected_face_index])
-            st.image(cropped_image, caption='Cropped Image', use_column_width=True)
-                
+            st.image(cropped_image, caption='Cropped Image', use_container_width=True)
+
             # 크롭된 이미지 다운로드 버튼
             buf = io.BytesIO()
             Image.fromarray(cropped_image).save(buf, format="PNG")
